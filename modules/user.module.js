@@ -96,6 +96,7 @@ class _user{
             })
             return {
                 status: true,
+                code: 201,
                 data: update
             }
         }catch(error) {
@@ -128,6 +129,7 @@ class _user{
             })
             return {
                 status: true,
+                code: 200,
                 data: del
             }
         } catch(error){

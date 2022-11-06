@@ -1,10 +1,19 @@
 const prisma = require('../helpers/database')
+const bcrypt = require('bcrypt')
+const Joi = require('joi')
 
 class _todo{
-    listTodo = async () => {
+    listTodo = async (body) => {
         try {
-            const list = await prisma.todo.findMany()
-            //console.log(list);
+            const list = await prisma.todo.findMany({
+                where: {
+                    userId: body.userId
+                },
+                include: {
+                    user: true
+                }
+            })
+            
             return{
                 status: true,
                 data: list
@@ -20,6 +29,21 @@ class _todo{
 
     createTodo = async (body) => {
         try{
+            const schema = Joi.object({
+                userId: Joi.number().required(),
+                description: Joi.string().required()
+            }).options({ abortEarly: false })
+
+            const validation = schema.validate(body)
+            if(validation.error){
+                const errorDetails = validation.error.details.map(detail => detail.message)
+                return {
+                    status: false,
+                    code: 422,
+                    error: errorDetails.join(', ')
+                }
+            }
+
             const add = await prisma.todo.create({
                 data: {
                     userId: body.userId,
@@ -42,6 +66,22 @@ class _todo{
 
     updateTodo = async (body) => {
         try{
+            const schema = Joi.object({
+                id: Joi.number().required(),
+                userId: Joi.number(),
+                description: Joi.string()
+            }).options({ abortEarly: false })
+
+            const validation = schema.validate(body)
+            if(validation.error){
+                const errorDetails = validation.error.details.map(detail => detail.message)
+                return {
+                    status: false,
+                    code: 422,
+                    error: errorDetails.join(', ')
+                }
+            }
+            
             const update = await prisma.todo.update({
                 where: {
                     id: body.id
@@ -53,6 +93,7 @@ class _todo{
             })
             return {
                 status: true,
+                code: 201,
                 data: update
             }
         }catch(error) {
